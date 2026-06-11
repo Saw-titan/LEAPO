@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Create Report{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+    
+        <div class="card">
+            <div class="card-header bg-gradient bg-success text-white d-flex justify-content-between align-items-center">
+                <h4><i class="fas fa-plus-circle"></i> Submit Report</h4>
+                <span class="badge bg-light text-dark" id="imageCount">0 photos</span>
+            </div>
+            <div class="card-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <form method="POST" enctype="multipart/form-data" id="reportForm">
+                    
+                    <!-- Current Time Display - IST -->
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-clock"></i> Current Time (India)</label>
+                        <div class="p-2 bg-primary text-white rounded" id="currentTime" style="font-size: 1.2rem; font-weight: bold;">
+                            Loading...
+                        </div>
+                    </div>
+                    
+                    <!-- Team / Area - REQUIRED -->
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-users me-2"></i>Team / Area <span class="text-danger">*</span></label>
+                        <select name="team_area" class="form-select" required>
+                            <option value="">Select Team / Area</option>
+                            <option value="Team - Pratap">Team - Pratap</option>
+                            <option value="Team - Sanga">Team - Sanga</option>
+                            <option value="Team - Phatta">Team - Phatta</option>
+                            <option value="Team - Udaj">Team - Udaj</option>
+                            <option value="Team - Amar">Team - Amar</option>
+                            <option value="Team - Jai Mal">Team - Jai Mal</option>
+                            <option value="Team - Gaura Badal">Team - Gaura Badal</option>
+                            <option value="Team - Bappa Rawal">Team - Bappa Rawal</option>
+                            <option value="Team - Bhamashah">Team - Bhamashah</option>
+                            <option value="Team - Jagat">Team - Jagat</option>
+                            <option value="Team - Karan">Team - Karan</option>
+                            <option value="Team - Swaroop">Team - Swaroop</option>
+                            <option value="Team - Hamir">Team - Hamir</option>
+                            <option value="Team - Sajjan">Team - Sajjan</option>
+                            <option value="Team - Fateh">Team - Fateh</option>
+                            <option value="Team - Sangram">Team - Sangram</option>
+                            <option value="Team - Jawan">Team - Jawan</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Fugai Identified / Abnormalities Identified</label>
+                        <textarea name="issue_description" class="form-control" rows="4" placeholder="Describe the issue..." required></textarea>
+                    </div>
+                    
+                    <!-- Shift Selection -->
+                    <div class="mb-3">
+                        <label class="form-label">Shift</label>
+                        <select name="shift" class="form-select" required>
+                            <option value="">Select Shift</option>
+                            <option value="G Shift">G Shift</option>
+                            <option value="A Shift">A Shift</option>
+                            <option value="B Shift">B Shift</option>
+                            <option value="C Shift">C Shift</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Camera Only -->
+                    <div class="mb-3">
+                        <label class="form-label">Take Photo</label>
+                        <button type="button" class="btn btn-primary" onclick="startCamera()">
+                            <i class="fas fa-camera"></i> Open Camera
+                        </button>
+                        
+                        <div id="cameraSection" class="mt-3" style="display:none;">
+                            <video id="video" autoplay playsinline style="max-width: 100%; border-radius: 10px;"></video>
+                            <canvas id="canvas" style="display:none;"></canvas>
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-success" onclick="capturePhoto()">
+                                    <i class="fas fa-camera"></i> Capture
+                                </button>
+                                <button type="button" class="btn btn-danger" onclick="stopCamera()">
+                                    <i class="fas fa-times"></i> Close
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="capturedPhotos" class="mt-3">
+                            <!-- Captured photos will appear here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden fields -->
+                    <input type="hidden" name="latitude" id="latitude" value="">
+                    <input type="hidden" name="longitude" id="longitude" value="">
+                    <input type="hidden" name="camera_images" id="camera_images" value="">
+                    
+                    <!-- Location -->
+                    <div class="mb-3">
+                        <label class="form-label">Location Status</label>
+                        <div id="locationStatus" class="p-2 bg-light rounded">
+                            <span class="text-muted"><i class="fas fa-spinner fa-spin"></i> Getting location...</span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success w-100" id="submitBtn" disabled>
+                        <i class="fas fa-paper-plane"></i> Submit Report
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var capturedImages = [];
+var stream = null;
+
+// IST Time - Correct Method
+function updateISTTime() {
+    var now = new Date();
+    var istDate = new Date(now.getTime() + (5 * 60 * 60 * 1000) + (30 * 60 * 1000));
+    
+    var hours = istDate.getUTCHours();
+    var minutes = istDate.getUTCMinutes();
+    var seconds = istDate.getUTCSeconds();
+    var day = istDate.getUTCDate();
+    var month = istDate.getUTCMonth() + 1;
+    var year = istDate.getUTCFullYear();
+    
+    hours = hours < 10 ? '0' + hours : hours;
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+    seconds = seconds < 10 ? '0' + seconds : seconds;
+    day = day < 10 ? '0' + day : day;
+    month = month < 10 ? '0' + month : month;
+    
+    document.getElementById('currentTime').textContent = day + '-' + month + '-' + year + ' ' + hours + ':' + minutes + ':' + seconds + ' IST';
+}
+
+setInterval(updateISTTime, 1000);
+updateISTTime();
+
+window.onload = function() {
+    getLocation();
+};
+
+function getLocation() {
+    var statusDiv = document.getElementById('locationStatus');
+    var latInput = document.getElementById('latitude');
+    var lngInput = document.getElementById('longitude');
+    var submitBtn = document.getElementById('submitBtn');
+    
+    if (navigator.geolocation) {
+        statusDiv.innerHTML = '<span class="text-info"><i class="fas fa-spinner fa-spin"></i> Getting location...</span>';
+        
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                latInput.value = position.coords.latitude;
+                lngInput.value = position.coords.longitude;
+                statusDiv.innerHTML = '<span class="text-success"><i class="fas fa-check-circle"></i> Location: ' + position.coords.latitude.toFixed(6) + ', ' + position.coords.longitude.toFixed(6) + '</span>';
+                submitBtn.disabled = false;
+            },
+            function(error) {
+                statusDiv.innerHTML = '<span class="text-warning"><i class="fas fa-exclamation-triangle"></i> Location not available</span>';
+                submitBtn.disabled = false;
+            }
+        );
+    } else {
+        statusDiv.innerHTML = '<span class="text-warning">Geolocation not supported</span>';
+        submitBtn.disabled = false;
+    }
+}
+
+function startCamera() {
+    var video = document.getElementById('video');
+    var section = document.getElementById('cameraSection');
+    
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(function(s) {
+            stream = s;
+            video.srcObject = stream;
+            section.style.display = 'block';
+        })
+        .catch(function(err) {
+            alert('Camera error: ' + err.message);
+        });
+}
+
+function capturePhoto() {
+    var video = document.getElementById('video');
+    var canvas = document.getElementById('canvas');
+    var container = document.getElementById('capturedPhotos');
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    
+    var dataURL = canvas.toDataURL('image/jpeg');
+    capturedImages.push(dataURL);
+    
+    var wrapper = document.createElement('div');
+    wrapper.style.display = 'inline-block';
+    wrapper.style.margin = '5px';
+    
+    var img = document.createElement('img');
+    img.src = dataURL;
+    img.style.width = '150px';
+    img.style.height = '150px';
+    img.style.objectFit = 'cover';
+    img.style.borderRadius = '10px';
+    img.style.border = '2px solid #28a745';
+    
+    var removeBtn = document.createElement('button');
+    removeBtn.innerHTML = '<i class="fas fa-times"></i> Remove';
+    removeBtn.className = 'btn btn-danger btn-sm d-block mt-1';
+    removeBtn.onclick = function() {
+        var idx = capturedImages.indexOf(dataURL);
+        if (idx > -1) capturedImages.splice(idx, 1);
+        wrapper.remove();
+        updateImageCount();
+    };
+    
+    wrapper.appendChild(img);
+    wrapper.appendChild(removeBtn);
+    container.appendChild(wrapper);
+    updateImageCount();
+}
+
+function stopCamera() {
+    if (stream) {
+        stream.getTracks().forEach(function(track) {
+            track.stop();
+        });
+    }
+    document.getElementById('cameraSection').style.display = 'none';
+}
+
+function updateImageCount() {
+    document.getElementById('imageCount').textContent = capturedImages.length + ' photo' + (capturedImages.length !== 1 ? 's' : '');
+}
+
+document.getElementById('reportForm').addEventListener('submit', function(e) {
+    document.getElementById('camera_images').value = JSON.stringify(capturedImages);
+});
+</script>
+{% endblock %}

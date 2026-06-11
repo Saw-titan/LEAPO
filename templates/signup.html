@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Signup - LEAP-O{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="col-md-6 col-lg-5">
+        <div class="card">
+            <div class="card-header bg-gradient bg-warning text-white text-center py-4">
+                <i class="fas fa-user-plus fa-3x mb-3"></i>
+                <h3 class="mb-0">Signup</h3>
+                <p class="mb-0 opacity-75">Create your account</p>
+            </div>
+            <div class="card-body p-4">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold"><i class="fas fa-id-badge me-2"></i>Employee ID</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="fas fa-id-badge text-muted"></i></span>
+                                <input type="text" name="emp_id" class="form-control" placeholder="EMP001" required>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold"><i class="fas fa-user me-2"></i>Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="fas fa-user text-muted"></i></span>
+                                <input type="text" name="username" class="form-control" placeholder="Enter username" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="fas fa-envelope me-2"></i>Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white"><i class="fas fa-envelope text-muted"></i></span>
+                            <input type="email" name="email" class="form-control" placeholder="your@email.com" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold"><i class="fas fa-briefcase me-2"></i>Department</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="fas fa-briefcase text-muted"></i></span>
+                                <select name="department" class="form-select" required>
+                                    <option value="">Select Department</option>
+                                    <option value="E&M">E&M</option>
+                                    <option value="IM">IM</option>
+                                    <option value="Mechanical">Mechanical</option>
+                                    <option value="Production">Production</option>
+                                    <option value="Packing Plant (O&M)">Packing Plant (O&M)</option>
+                                    <option value="Process">Process</option>
+                                    <option value="Plant & Inventory">Plant & Inventory</option>
+                                    <option value="New Works/Civil/LEAP-O">New Works/Civil/LEAP-O</option>
+                                    <option value="HR">HR</option>
+                                    <option value="Accounts">Accounts</option>
+                                    <option value="Logistics">Logistics</option>
+                                    <option value="Environment">Environment</option>
+                                    <option value="Mines">Mines</option>
+                                    <option value="CCP & WSR">CCP & WSR</option>
+                                    <option value="Quality">Quality</option>
+                                    <option value="Safety">Safety</option>
+                                    <option value="Procurement">Procurement</option>
+                                    <option value="Raw Material">Raw Material</option>
+                                    <option value="Security">Security</option>
+                                </select> 
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold"><i class="fas fa-users me-2"></i>Team / Area</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white"><i class="fas fa-users text-muted"></i></span>
+                                <select name="area" class="form-select" required>
+                                    <option value="">Select Team</option>
+                                    <option value="Team - Pratap">Team - Pratap</option>
+                                    <option value="Team - Sanga">Team - Sanga</option>
+                                    <option value="Team - Phatta">Team - Phatta</option>
+                                    <option value="Team - Udaj">Team - Udaj</option>
+                                    <option value="Team - Amar">Team - Amar</option>
+                                    <option value="Team - Jai Mal">Team - Jai Mal</option>
+                                    <option value="Team - Gaura Badal">Team - Gaura Badal</option>
+                                    <option value="Team - Bappa Rawal">Team - Bappa Rawal</option>
+                                    <option value="Team - Bhamashah">Team - Bhamashah</option>
+                                    <option value="Team - Jagat">Team - Jagat</option>
+                                    <option value="Team - Karan">Team - Karan</option>
+                                    <option value="Team - Swaroop">Team - Swaroop</option>
+                                    <option value="Team - Hamir">Team - Hamir</option>
+                                    <option value="Team - Sajjan">Team - Sajjan</option>
+                                    <option value="Team - Fateh">Team - Fateh</option>
+                                    <option value="Team - Sangram">Team - Sangram</option>
+                                    <option value="Team - Jawan">Team - Jawan</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold"><i class="fas fa-lock me-2"></i>Password</label>
+                        <input type="password" name="password" id="password" class="form-control" placeholder="Enter password" onkeyup="validatePassword()" required>
+                        
+                        <ul class="list-group list-group-flush small mt-2" id="requirements">
+                            <li class="list-group-item ps-0" id="req-length">
+                                <i class="fas fa-circle text-muted me-2"></i>At least 8 characters
+                            </li>
+                            <li class="list-group-item ps-0" id="req-uppercase">
+                                <i class="fas fa-circle text-muted me-2"></i>At least one uppercase letter (A-Z)
+                            </li>
+                            <li class="list-group-item ps-0" id="req-lowercase">
+                                <i class="fas fa-circle text-muted me-2"></i>At least one lowercase letter (a-z)
+                            </li>
+                            <li class="list-group-item ps-0" id="req-digit">
+                                <i class="fas fa-circle text-muted me-2"></i>At least one digit (0-9)
+                            </li>
+                            <li class="list-group-item ps-0" id="req-special">
+                                <i class="fas fa-circle text-muted me-2"></i>At least one special character (!@#$%^&*)
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-warning w-100 py-2" id="submit-btn" disabled>
+                        <i class="fas fa-user-plus me-2"></i>Signup
+                    </button>
+                </form>
+            </div>
+            <div class="card-footer text-center py-3 bg-light">
+                <small class="text-muted">Already have an account?</small><br>
+                <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-sm mt-2">
+                    <i class="fas fa-sign-in-alt me-1"></i>Login
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function validatePassword() {
+    var password = document.getElementById('password').value;
+    var submitBtn = document.getElementById('submit-btn');
+    
+    var hasLength = password.length >= 8;
+    var hasUppercase = /[A-Z]/.test(password);
+    var hasLowercase = /[a-z]/.test(password);
+    var hasDigit = /[0-9]/.test(password);
+    var hasSpecial = /[!@#$%^&*()_+\-=\$\${};:'",.<>?/\\|`~]/.test(password);
+    
+    updateRequirement('req-length', hasLength);
+    updateRequirement('req-uppercase', hasUppercase);
+    updateRequirement('req-lowercase', hasLowercase);
+    updateRequirement('req-digit', hasDigit);
+    updateRequirement('req-special', hasSpecial);
+    
+    var allValid = hasLength && hasUppercase && hasLowercase && hasDigit && hasSpecial;
+    
+    if (allValid) {
+        submitBtn.disabled = false;
+    } else {
+        submitBtn.disabled = true;
+    }
+}
+
+function updateRequirement(id, isValid) {
+    var element = document.getElementById(id);
+    var icon = element.querySelector('i');
+    
+    if (isValid) {
+        element.classList.remove('text-muted');
+        element.classList.add('text-success');
+        icon.classList.remove('fa-circle');
+        icon.classList.add('fa-check-circle');
+    } else {
+        element.classList.remove('text-success');
+        element.classList.add('text-muted');
+        icon.classList.remove('fa-check-circle');
+        icon.classList.add('fa-circle');
+    }
+}
+</script>
+{% endblock %}

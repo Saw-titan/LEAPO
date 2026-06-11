@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: leapo
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:5000
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://postgres:password@host:5432/database
+      - key: SECRET_KEY
+        value: your-secret-key-change-this
+      - key: MAIL_SERVER
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: 587
+      - key: MAIL_USERNAME
+        value: your-email@gmail.com
+      - key: MAIL_PASSWORD
+        value: your-app-password
