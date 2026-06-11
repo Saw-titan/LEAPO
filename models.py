@@ -81,6 +81,8 @@ class Report(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     worker_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     issue_description = db.Column(db.Text, nullable=False)
+    pending_reason = db.Column(db.Text, nullable=True)
+
     
     # NEW - Image stored in PostgreSQL (BYTEA)
     image_data = db.Column(db.LargeBinary(), nullable=True)  # Actual image data

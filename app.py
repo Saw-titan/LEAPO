@@ -34,84 +34,7 @@ def allowed_file(filename):
 
 # ==================== PASSWORD VALIDATION ====================
 
-def validate_password_strict(password):
-    if not password:
-        return False, "Password is required"
-    
-    if len(password) < 8:
-        return False, "Password must be at least 8 characters long"
-    
-    if not re.search(r'[A-Z]', password):
-        return False, "Password must contain at least one uppercase letter (A-Z)"
-    
-    if not re.search(r'[a-z]', password):
-        return False, "Password must contain at least one lowercase letter (a-z)"
-    
-    if not re.search(r'\d', password):
-        return False, "Password must contain at least one digit (0-9)"
-    
-    if not re.search(r'[!@#$%^&*()_+\-=\$\${};:\'",.<>?/\\|`~]', password):
-        return False, "Password must contain at least one special character (!@#$%^&*...)"
-    
-    return True, None
 
-def generate_otp():
-    return ''.join([str(random.randint(0, 9)) for _ in range(6)])
-
-def send_email_otp(email, otp):
-    """Send OTP via email with proper error handling"""
-    try:
-        import smtplib
-        from email.mime.text import MIMEText
-        from email.mime.multipart import MIMEMultipart
-        
-        mail_server = app.config.get('MAIL_SERVER')
-        mail_port = app.config.get('MAIL_PORT', 587)
-        mail_username = app.config.get('MAIL_USERNAME')
-        mail_password = app.config.get('MAIL_PASSWORD')
-        
-        # Check if config exists
-        if not all([mail_server, mail_username, mail_password]):
-            print("Email configuration missing!")
-            return False
-        
-        msg = MIMEMultipart()
-        msg['From'] = mail_username
-        msg['To'] = email
-        msg['Subject'] = 'LEAPO Password Reset OTP'
-        
-        body = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif; padding: 20px;">
-            <h2 style="color: #f59e0b;">Password Reset Request</h2>
-            <p>Your OTP for password reset is:</p>
-            <h1 style="color: #f59e0b; letter-spacing: 5px;">{otp}</h1>
-            <p>This OTP is valid for 10 minutes.</p>
-            <p>If you didn't request this, please ignore this email.</p>
-        </body>
-        </html>
-        """
-        msg.attach(MIMEText(body, 'html'))
-        
-        server = smtplib.SMTP(mail_server, mail_port)
-        server.ehlo()
-        server.starttls()
-        server.login(mail_username, mail_password)
-        server.sendmail(mail_username, email, msg.as_string())
-        server.quit()
-        
-        print(f"✓ Email sent successfully to {email}")
-        return True
-        
-    except smtplib.SMTPAuthenticationError:
-        print("Email error: Authentication failed - check username/password")
-        return False
-    except smtplib.SMTPConnectError:
-        print("Email error: Could not connect to SMTP server")
-        return False
-    except Exception as e:
-        print(f"Email error: {e}")
-        return False
 # ==================== IMAGE ROUTES ====================
 
 @app.route('/image/<int:report_id>')
@@ -164,85 +87,7 @@ def get_image_thumb(report_id):
 
 # ==================== FORGOT PASSWORD ROUTES ====================
 
-@app.route('/forgot_password', methods=['GET', 'POST'])
-def forgot_password():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        
-        user = User.query.filter_by(email=email).first()
-        
-        if user:
-            otp = generate_otp()
-            user.otp_code = otp
-            user.otp_expiry = datetime.now() + td(minutes=10)
-            db.session.commit()
-            
-            # Try to send email, but don't fail if it doesn't work
-            email_sent = send_email_otp(email, otp)
-            
-            # Always show success (demo mode on deployment)
-            flash(f'OTP sent! Code: {otp}', 'success')
-            
-            return redirect(url_for('verify_otp', user_id=user.id))
-        else:
-            flash('Email not found! Please register first.', 'error')
-    
-    return render_template('forgot_password.html')
 
-@app.route('/verify_otp/<int:user_id>', methods=['GET', 'POST'])
-def verify_otp(user_id):
-    user = User.query.get(user_id)
-    
-    if not user:
-        flash('Invalid request!', 'error')
-        return redirect(url_for('forgot_password'))
-    
-    if request.method == 'POST':
-        otp = request.form.get('otp')
-        
-        if user.otp_code and user.otp_expiry:
-            if user.otp_code == otp and user.otp_expiry > datetime.now():
-                user.otp_code = None
-                user.otp_expiry = None
-                db.session.commit()
-                
-                flash('OTP verified! Please set your new password.', 'success')
-                return redirect(url_for('reset_password', user_id=user.id))
-            else:
-                flash('Invalid or expired OTP!', 'error')
-        else:
-            flash('No OTP found. Please request a new one.', 'error')
-    
-    return render_template('verify_otp.html', user_id=user_id)
-
-@app.route('/reset_password/<int:user_id>', methods=['GET', 'POST'])
-def reset_password(user_id):
-    user = User.query.get(user_id)
-    
-    if not user:
-        flash('Invalid request!', 'error')
-        return redirect(url_for('forgot_password'))
-    
-    if request.method == 'POST':
-        new_password = request.form.get('new_password')
-        confirm_password = request.form.get('confirm_password')
-        
-        if new_password != confirm_password:
-            flash('Passwords do not match!', 'error')
-            return render_template('reset_password.html', user_id=user_id)
-        
-        is_valid, error_message = validate_password_strict(new_password)
-        if not is_valid:
-            flash(error_message, 'error')
-            return render_template('reset_password.html', user_id=user_id)
-        
-        user.set_password(new_password)
-        db.session.commit()
-        
-        flash('Password reset successful! Please login.', 'success')
-        return redirect(url_for('login'))
-    
-    return render_template('reset_password.html', user_id=user_id)
 
 # ==================== DOWNLOAD PDF ROUTE ====================
 
@@ -828,7 +673,30 @@ def update_report_status(report_id):
     
     flash(f'Report #{report.id} status updated to {new_status}!', 'success')
     return redirect(url_for('worker_dashboard'))
-
+@app.route('/update_pending_reason/<int:report_id>', methods=['POST'])
+@login_required
+def update_pending_reason(report_id):
+    report = Report.query.get_or_404(report_id)
+    
+    # Only the worker who created the report can add reason
+    if report.worker_id != current_user.id:
+        if current_user.role != 'admin':
+            flash('You can only update your own reports!', 'error')
+            return redirect(url_for('worker_dashboard'))
+        # Admins can also add reason
+        if current_user.role == 'admin':
+            pass
+    
+    pending_reason = request.form.get('pending_reason')
+    report.pending_reason = pending_reason
+    db.session.commit()
+    
+    flash(f'Pending reason added to Report #{report.id}!', 'success')
+    
+    if current_user.role == 'admin':
+        return redirect(url_for('admin_dashboard'))
+    else:
+        return redirect(url_for('worker_dashboard'))
 # ==================== INITIALIZATION =================
 
 def init_db():

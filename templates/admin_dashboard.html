@@ -86,7 +86,6 @@
                     <h4 class="mb-0"><i class="fas fa-shield-alt me-2"></i>LEAP-O Admin</h4>
                 </div>
                 <div>
-                    <!-- Download button WITH filters -->
                     <a href="{{ url_for('download_reports', 
                         date_filter=filter_date_filter,
                         date_from=filter_date_from,
@@ -116,6 +115,7 @@
                                 <th>Image</th>
                                 <th>Location</th>
                                 <th>Status</th>
+                                <th>Pending Reason</th>
                                 <th>Action</th>
                                 <th>Date/Time IST</th>
                             </tr>
@@ -168,6 +168,15 @@
                                     {% endif %}
                                 </td>
                                 <td>
+                                    {% if report.pending_reason %}
+                                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewReason{{ report.id }}">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
                                     <a href="{{ url_for('download_report_pdf', report_id=report.id) }}" class="btn btn-sm btn-outline-danger p-1" title="PDF">
                                         <i class="fas fa-file-pdf"></i>
                                     </a>
@@ -191,4 +200,32 @@
         </div>
     </div>
 </div>
+
+<!-- MODALS FOR VIEWING PENDING REASON (ADMIN - VIEW ONLY) -->
+{% for report in reports %}
+{% if report.pending_reason %}
+<div class="modal fade" id="viewReason{{ report.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-comment me-2"></i>Pending Reason - Report #{{ report.id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <p class="mb-2"><strong>Worker Name:</strong> {{ report.worker.username }}</p>
+                    <hr>
+                    <p class="mb-1"><strong>Reason:</strong></p>
+                    <p class="mb-0">{{ report.pending_reason }}</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
 {% endblock %}

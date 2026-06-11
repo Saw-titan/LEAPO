@@ -43,6 +43,7 @@
                                 <th>Image</th>
                                 <th>Location</th>
                                 <th>Status</th>
+                                <th>Pending Reason</th>
                                 <th>Date/Time IST</th>
                                 <th>Action</th>
                             </tr>
@@ -80,6 +81,19 @@
                                     <span class="badge bg-primary">In Progress</span>
                                     {% elif report.status == 'resolved' %}
                                     <span class="badge bg-success">Resolved</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if report.status == 'pending' %}
+                                        <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#pendingReason{{ report.id }}">
+                                            <i class="fas fa-comment"></i> Add
+                                        </button>
+                                    {% elif report.pending_reason %}
+                                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#viewReason{{ report.id }}">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
                                     {% endif %}
                                 </td>
                                 <td>
@@ -135,4 +149,57 @@
         </div>
     </div>
 </div>
+
+<!-- MODALS FOR ADDING PENDING REASON (WORKER - WHEN PENDING) -->
+{% for report in reports %}
+{% if report.status == 'pending' %}
+<div class="modal fade" id="pendingReason{{ report.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title"><i class="fas fa-comment me-2"></i>Add Pending Reason - Report #{{ report.id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('update_pending_reason', report_id=report.id) }}">
+                <div class="modal-body">
+                    <label class="form-label fw-bold">Why is this report pending?</label>
+                    <textarea name="pending_reason" class="form-control" rows="4" placeholder="Enter reason why this report is pending...">{{ report.pending_reason or '' }}</textarea>
+                    <small class="text-muted">Explain the reason for pending status.</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-warning">Save Reason</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
+<!-- MODALS FOR VIEWING PENDING REASON (WORKER - WHEN NOT PENDING) -->
+{% for report in reports %}
+{% if report.pending_reason and report.status != 'pending' %}
+<div class="modal fade" id="viewReason{{ report.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="fas fa-comment me-2"></i>Pending Reason - Report #{{ report.id }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <p class="mb-1"><strong>Reason:</strong></p>
+                    <p class="mb-0">{{ report.pending_reason }}</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
 {% endblock %}
