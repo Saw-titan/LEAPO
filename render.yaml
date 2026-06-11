@@ -3,7 +3,7 @@ services:
     name: leapo
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --bind 0.0.0.0:5000
+    startCommand: gunicorn app:app --bind 0.0.0.0:5000 --timeout 120
     envVars:
       - key: DATABASE_URL
         value: postgresql://postgres:password@host:5432/database

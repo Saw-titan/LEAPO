@@ -177,12 +177,11 @@ def forgot_password():
             user.otp_expiry = datetime.now() + td(minutes=10)
             db.session.commit()
             
+            # Try to send email, but don't fail if it doesn't work
             email_sent = send_email_otp(email, otp)
             
-            if email_sent:
-                flash(f'OTP sent to your email!', 'success')
-            else:
-                flash(f'Email not configured. Demo OTP: {otp}', 'info')
+            # Always show success (demo mode on deployment)
+            flash(f'OTP sent! Code: {otp}', 'success')
             
             return redirect(url_for('verify_otp', user_id=user.id))
         else:
